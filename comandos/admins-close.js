@@ -1,0 +1,43 @@
+import { config } from '../config.js';
+
+const closeGroup = {
+    name: 'close',
+    alias: ['cerrargroup', 'cerrar'],
+    category: 'admins',
+    desc: 'Cierra el grupo para que solo los administradores puedan enviar mensajes.',
+    isAdmin: true,
+    noPrefix: true,
+
+    run: async (conn, m) => {
+        try {
+            const groupMetadata = await conn.groupMetadata(m.chat);
+            const botNumber = conn.user.id.split(':')[0] + '@s.whatsapp.net';
+            const userNumber = m.sender;
+
+            const isBotAdmin = groupMetadata.participants.find(p => p.id === botNumber)?.admin;
+
+            if (!isBotAdmin) {
+                return m.reply(`*${config.visuals.emoji2}* El bot no posee rango de Administrador. Requiero permisos elevados para cerrar las comunicaciones.\n\n> ¡No puedo gestionar el grupo sin los permisos adecuados!`);
+            }
+
+            const isUserAdmin = groupMetadata.participants.find(p => p.id === userNumber)?.admin;
+
+            if (!isUserAdmin) {
+                return m.reply(`*${config.visuals.emoji2}* Solo administradores pueden usar este comando.\n\n> ¡Necesitas permisos de admin para esto!`);
+            }
+
+            if (groupMetadata.announce) {
+                return m.reply(`*${config.visuals.emoji2}* El grupo ya se encuentra cerrado.\n\n> ¡El silencio ya impera en este sector!`);
+            }
+
+            await conn.groupSettingUpdate(m.chat, 'announcement');
+
+            m.reply(`*${config.visuals.emoji3} \`GRUPO CERRADO\` ${config.visuals.emoji3}*\n\nSe ha activado el modo restrictivo. Solo los administradores pueden enviar mensajes.\n\n> ¡Momento de silencio en el servidor!`);
+        } catch (e) {
+            console.error('Error cerrando grupo:', e);
+            m.reply(`*${config.visuals.emoji2}* Error al intentar cerrar el grupo.`);
+        }
+    }
+};
+
+export default closeGroup;

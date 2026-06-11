@@ -1,0 +1,65 @@
+import { config } from '../config.js';
+import { fishPhrases } from './frases/rpg/fish.js';
+import { fishFailPhrases } from './frases/rpg/fish-fail.js';
+
+const fishCommand = {
+    name: 'pescar',
+    alias: ['fish', 'pesca'],
+    category: 'rpg',
+    desc: 'Intenta pescar en el río para ganar coins. Cuidado con perder la carnada.',
+    noPrefix: true,
+
+    run: async (conn, m) => {
+        try {
+            const userJid = m.sender.replace(/:.*@/g, '@');
+            const userDb = global.db.data.users[userJid];
+
+            const baseCooldown = 5 * 60 * 1000; 
+            const penaltyCooldown = 10 * 60 * 1000; 
+
+            const now = Date.now();
+            const lastTime = userDb.lastFish || 0;
+            const currentCooldown = userDb.fishPenalty ? penaltyCooldown : baseCooldown;
+            const timePassed = now - lastTime;
+
+            if (timePassed < currentCooldown) {
+                const timeLeft = currentCooldown - timePassed;
+                const min = Math.floor(timeLeft / 60000);
+                const sec = Math.floor((timeLeft % 60000) / 1000);
+                return m.reply(`*${config.visuals.emoji2}* ¡Paciencia! Podrás volver a intentar pescar en **${min}m ${sec}s**.`);
+            }
+
+            let isFail = Math.random() < 0.30; 
+            const tieneTrebol = userDb.inventory?.trebol > 0;
+
+            if (isFail && tieneTrebol) {
+                isFail = false;
+                userDb.inventory.trebol -= 1;
+                m.reply(`*🍀 ¡SUERTE DE TRÉBOL!* El amuleto brilló y evitaste perder la carnada.`);
+            }
+
+            if (isFail) {
+                const failPhrase = fishFailPhrases[Math.floor(Math.random() * fishFailPhrases.length)];
+                userDb.lastFish = now;
+                userDb.fishPenalty = true; 
+                return m.reply(`*${config.visuals.emoji2}* \`¡PERDISTE LA CARNADA!\`\n\n${failPhrase}\n\n> Tu próximo intento tardará **10 minutos** por el fallo.`);
+            }
+
+            const fishCaught = Math.floor(Math.random() * 8) + 1;
+            const totalEarned = fishCaught * 3000;
+            const randomPhrase = fishPhrases[Math.floor(Math.random() * fishPhrases.length)];
+
+            userDb.wallet = (userDb.wallet || 0) + totalEarned;
+            userDb.lastFish = now;
+            userDb.fishPenalty = false; 
+
+            const textoExito = `*${config.visuals.emoji3}* \`PESCA EXITOSA\` *${config.visuals.emoji3}*\n\n${randomPhrase}\n\n🎣 *Peces capturados:* ${fishCaught}\n💰 *Ganancia total:* ¥${totalEarned.toLocaleString()} coins\n\n> El dinero se guardó en tu cartera. Tu siguiente espera será de **5 minutos**.`;
+            await m.reply(textoExito);
+        } catch (e) {
+            console.error(e);
+            m.reply(`*${config.visuals.emoji2}* Error en el sistema de pesca.`);
+        }
+    }
+};
+
+export default fishCommand;

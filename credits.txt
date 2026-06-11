@@ -1,0 +1,14 @@
+⚠️ AVISO IMPORTANTE ⚠️
+
+=> Créditos al desarrollador
+
+Hola usuarios, mi nombre es Félix, soy el creador, fundador, owner y único desarrollador de este proyecto. por este medio; les informo que no pondré créditos a todos mis códigos, simplemente dejo esto por acá para que se sepa claro y preciso; este bot fue creado por mi (Dev-FelixOfc) más conocido como Félix Manuel, y este bot completamente es creado desde cero, mis ideas, mi tiempo, mi desarrollo y mi control total para que nada falle en el proyecto es propio mío. el bot fue creado marzo, al rededor de los dias 24 a 28 (2026), cualquer código de los míos en otros bots que tengan créditos, se tomará como plagio, porque mi base es pública para que hagan sus forks y creen bots diferentes, buenos y no para que vallan y le pongan propiedad a lo que no les pertenece en realidad. Por este medio me comprometo a brindarles una experiencia inolvidable, inresistible y sobre todo; diferente.
+
+simplemte si le hacen fork al repositorio o lo clonan no borren este archivo ni el de la licencia, ni tampoco le quiten sus créditos a los códigos que tienen créditos, y si simplemente usarán un código en específico ponerle mis respectivos créditos:
+
+/* Código desarrollado por Dev-FelixOfc 
+» GitHub: https://github.com/Dev-FelixOfc 
+Por favor, no quitar créditos.
+*/
+
+no les estoy pidiendo añadir mi nombre en sus readmes ni que me den agradecimientos en lo mismo, simplemte pido respeto a mi esfuerzo y dedicación y amor hacia la comunidad, se les quiere mucho! 💓

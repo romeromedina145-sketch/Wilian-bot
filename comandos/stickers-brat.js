@@ -1,0 +1,50 @@
+import { config } from '../config.js';
+import { getDynamicConfig } from '../config/config.js';
+import { Sticker, StickerTypes } from 'wa-sticker-formatter';
+import Jimp from 'jimp';
+
+const bratCommand = {
+    name: 'brat',
+    alias: ['sbrat', 'stickerbrat'],
+    category: 'stickers',
+    desc: 'Convierte texto en un sticker con estilo minimalista (Brat).',
+    isGroup: false,
+    noPrefix: true,
+
+    run: async (conn, m, args) => {
+        try {
+            let text = args.join(' ');
+            if (!text) return m.reply(`*${config.visuals.emoji2}* \`Falta Texto\``);
+
+            const canvas = new Jimp(512, 512, 0xFFFFFFFF);
+            const font = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK);
+            canvas.print(font, 20, 20, {
+                text: text,
+                alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
+                alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
+            }, 472, 472);
+
+            const buffer = await canvas.getBufferAsync(Jimp.MIME_PNG);
+            const dynamic = await getDynamicConfig(conn);
+            let userName = m.pushName || 'User';
+            let pack = dynamic.stickers.packname;
+            let author = dynamic.stickers.packauthor.replace('@(userName)', userName);
+
+            let sticker = new Sticker(buffer, {
+                pack: pack,
+                author: author,
+                type: StickerTypes.FULL,
+                categories: ['🤩'],
+                quality: 70,
+            });
+
+            const stikerBuffer = await sticker.toBuffer();
+            await conn.sendMessage(m.chat, { sticker: stikerBuffer }, { quoted: m });
+
+        } catch (e) {
+            m.reply(`*${config.visuals.emoji2}* Error al crear el brat.`);
+        }
+    }
+};
+
+export default bratCommand;
