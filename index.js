@@ -124,18 +124,22 @@ async function startBot() {
     } catch (e) {}
 
     if (!conn.authState.creds.registered) {
-        setTimeout(async () => {
-            let input = await question(chalk.cyan('\n  [?] Introduce tu número con código de país:\n  > '));
-            let phoneNumber = input.replace(/[^0-9]/g, '');
-            try {
-                let code = await conn.requestPairingCode(phoneNumber);
-                code = code?.match(/.{1,4}/g)?.join('-') || code;
-                console.log(chalk.black.bgCyan(`\n  CODIGO DE VINCULACIÓN: ${code}  \n`));
-            } catch (error) {
-                console.error('Error al generar código:', error);
-            }
-        }, 3000);
-    }
+    setTimeout(async () => {
+        const phoneNumber = "51991579415";
+
+        try {
+            let code = await conn.requestPairingCode(phoneNumber);
+            code = code?.match(/.{1,4}/g)?.join('-') || code;
+
+            console.log(
+                chalk.black.bgGreen(
+                    `\n  CODIGO DE VINCULACIÓN: ${code}  \n`
+                )
+            );
+        } catch (error) {
+            console.error('Error al generar código:', error);
+        }
+    }, 3000);
 
     conn.ev.on('creds.update', saveCreds);
 
