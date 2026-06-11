@@ -13,8 +13,9 @@ const menuCommand = {
     run: async (conn, m, args, usedPrefix) => {
         try {
             const prefix = usedPrefix || '#'; 
-            const userJid = m.sender.split('@')[0].split(':')[0].trim() + '@s.whatsapp.net';
+            const userJid = m.sender.replace(/:.*@/g, '@');
             const userShortId = userJid.split('@')[0];
+            const group = m.chat;
 
             const commandsSource = conn.commands || global.commands;
             if (!commandsSource) return m.reply('Error: No se pudo acceder a la lista de comandos.');
@@ -49,24 +50,27 @@ const menuCommand = {
                 if (localData.banner) displayBanner = localData.banner;
             }
 
-            const dbUser = await database.getUser(userJid) || {};
-            const wallet = (dbUser.wallet || 0) + (dbUser.bank || 0);
-
-            const rank = 'Novato de las Cuevas';
-            const diamantes = 0;
+            const userGlobal = global.db.data.users[userJid] || {};
+            const wallet = (userGlobal.wallet || 0) + (userGlobal.bank || 0);
+            
+            const groupData = global.db.data.chats[group] || {};
+            const userRpg = groupData.rpg?.[userJid] || {};
+            
+            const rank = userRpg.rank || 'Novato de las Cuevas';
+            const diamantes = userRpg.minerals?.diamantes || 0;
 
             const infoBot = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐁𝐎𝐓 ✿︎━━━━╮
 ┃ ✐ *Owner* »
-┃ kazuma.giize.com/Dev-FelixOfc
+┃ 51991579415
 ┃ ✐ *Commands* »
-┃ kazuma.giize.com/commands
+┃ .play .play2 .tt .fb .etc
 ┃ ✐ *Upload* »
-┃ upload.yotsuba.giize.com
+┃ impostagem
 ┃ ✐ *Official channel* »
-┃ https://whatsapp.com/channel/0029Vb6sgWdJkK73qeLU0J0N
+┃   No Hay 
 ╰━━━━━━━━━━━━━━━━━━━╯\n`;
 
-            const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄𝐑 ━━━━╮
+            const infoUser = `┏━━━━✿︎ 𝐈𝐍𝐅𝐎-𝐔𝐒𝐄𝐑 ✿︎━━━━╮
 ┃ ✐ *Usuario* »  @${userShortId}
 ┃ ✐ *Rango* » ${rank}
 ┃ ✐ *Coins* » ¥${wallet.toLocaleString()}
@@ -105,11 +109,16 @@ const menuCommand = {
             let header = `¡Hola! Soy ${displayLongName} *(${currentBotType})*.\n\n`;
             let textoMenu = `${header}${subHeader}${infoBot}\n${infoUser}\n\n${finalBody}`;
 
-            await conn.sendMessage(m.chat, { 
-                image: { url: displayBanner }, 
-                caption: textoMenu,
-                mentions: [userJid]
-            }, { quoted: m });
+            await conn.sendMessage(
+    m.chat,
+    {
+        video: { url: config.visuals.video1 },
+        caption: textoMenu,
+        mimetype: 'video/mp4',
+        mentions: [userJid]
+    },
+    { quoted: m }
+);
 
         } catch (err) {
             console.error('Error en el menú:', err);
