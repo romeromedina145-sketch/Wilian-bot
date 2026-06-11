@@ -140,6 +140,7 @@ async function startBot() {
             console.error('Error al generar código:', error);
         }
     }, 3000);
+    }
 
     conn.ev.on('creds.update', saveCreds);
 
