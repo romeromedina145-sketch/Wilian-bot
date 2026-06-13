@@ -3,12 +3,13 @@ import axios from 'axios'
 
 const youtubeVideo = {
     name: 'play2',
-    alias: ['ytv', 'playvid'],
+    alias: ['ytv', 'ytmp4','video'],
     category: 'descargas',
     desc: 'Busca, muestra info y descarga el video de YouTube.',
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
+
         if (!text) {
             return m.reply(
                 `*${config.visuals.emoji2}* Por favor, ingresa el nombre del video o el enlace.`
@@ -23,26 +24,29 @@ const youtubeVideo = {
         })
 
         try {
-            let videoUrl
+            let videoUrl = ''
 
             const isUrl =
                 /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/i.test(text)
 
             if (isUrl) {
+
                 videoUrl = text
 
                 await m.reply(
-                    `*${config.visuals.emoji3}* Enlace detectado. Enviando video, espera un momento...`
+                    `*${config.visuals.emoji3}* ✿ Enlace detectado. Enviando video, espera un momento...`
                 )
+
             } else {
+
                 const { data: searchRes } = await axios.get(
-                    `https://${config.kzmUrl}/api/search/youtube?apiKey=${config.apiKzm}&q=${encodeURIComponent(text)}`
+                    `https://api.delirius.store/search/ytsearch?q=${encodeURIComponent(text)}`
                 )
 
                 if (
-                    !searchRes.status ||
-                    !searchRes.result ||
-                    searchRes.result.length === 0
+                    !searchRes?.status ||
+                    !searchRes?.data ||
+                    !searchRes.data.length
                 ) {
                     await conn.sendMessage(m.chat, {
                         react: {
@@ -54,7 +58,7 @@ const youtubeVideo = {
                     return m.reply('No se encontraron resultados.')
                 }
 
-                const firstResult = searchRes.result[0]
+                const firstResult = searchRes.data[0]
 
                 videoUrl = firstResult.url
 
@@ -83,20 +87,28 @@ const youtubeVideo = {
                 }
 
                 const infoText =
-                    `*${config.visuals.emoji3} YouTube Video ${config.visuals.emoji3}*\n\n` +
-                    `*= Título* »\n> ${firstResult.title}\n` +
-                    `*= Canal* »\n> ${firstResult.channel}\n` +
-                    `*= Publicado* »\n> ${firstResult.publishedAt}\n` +
-                    `*= Duración* »\n> ${firstResult.duration}\n` +
-                    `*= Vistas* »\n> ${firstResult.views}\n` +
-                    `*= Enlace* »\n> ${videoUrl}\n\n` +
-                    `_Enviando video, espera un momento..._`
+`*${config.visuals.emoji3} YouTube Video ${config.visuals.emoji3}*
+
+*= Título* »
+> ${firstResult.title}
+*= Canal* »
+> ${firstResult.author?.name || 'Desconocido'}
+*= Publicado* »
+> ${firstResult.publishedAt || 'Desconocido'}
+*= Duración* »
+> ${firstResult.duration || 'Desconocida'}
+*= Vistas* »
+> ${(firstResult.views || 0).toLocaleString()}
+*= Enlace* »
+> ${videoUrl}
+
+_Enviando video, espera un momento..._`
 
                 await conn.sendMessage(
                     m.chat,
                     {
                         image: {
-                            url: firstResult.thumbnail
+                            url: firstResult.image
                         },
                         caption: infoText
                     },
@@ -106,7 +118,6 @@ const youtubeVideo = {
                 )
             }
 
-            // DESCARGA CON DELIRIUS
             const { data: videoRes } = await axios.get(
                 `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=360p`
             )
@@ -132,10 +143,10 @@ const youtubeVideo = {
                     },
                     mimetype: 'video/mp4',
                     caption:
-                        `🎬 *${videoData.title}*\n` +
-                        `📺 Autor: ${videoData.author}\n` +
-                        `👁️ Vistas: ${videoData.views}\n` +
-                        `🎞️ Calidad: ${videoData.format}`
+                        `🎬 *${videoData.title || 'Video'}*\n` +
+                        `📺 Autor: ${videoData.author || 'Desconocido'}\n` +
+                        `👁️ Vistas: ${videoData.views || '0'}\n` +
+                        `🎞️ Calidad: ${videoData.format || '360p'}`
                 },
                 {
                     quoted: m
@@ -150,6 +161,7 @@ const youtubeVideo = {
             })
 
         } catch (e) {
+
             console.error(e)
 
             await conn.sendMessage(m.chat, {

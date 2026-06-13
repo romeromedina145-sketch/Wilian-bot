@@ -1,39 +1,149 @@
-import { config } from '../config.js';
-import axios from 'axios';
+import axios from 'axios'
 
-const tiktokDownload = {
-    name: 'tiktok',
-    alias: ['tt', 'ttdl'],
+const cache = new Map()
+const queue = new Map()
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+
+const tryCatch = async (fn) => {
+    try {
+        return await fn()
+    } catch {
+        return null
+    }
+}
+
+const pickNoWatermark = (data) => {
+    // 🧠 prioridad real sin watermark
+    return data?.play || data?.hdplay || null
+}
+
+const pickAny = (data) => {
+    return data?.play || data?.hdplay || data?.wmplay || null
+}
+
+const tiktokdl = {
+    name: 'tiktokdl',
+    alias: ['ttdl', 'tiktok', 'tt', 'godtt'],
     category: 'descargas',
-    desc: 'Descarga videos de TikTok.',
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        const urlMatch = text?.match(/https?:\/\/[^\s]+/gi);
-        const link = urlMatch ? urlMatch[0] : null;
 
-        if (!link) return m.reply(`*${config.visuals.emoji2}* Ingresa un enlace para descargar el vídeo.`);
+        const url = (text || args.join(' '))?.trim()
 
-        await conn.sendMessage(m.chat, { react: { text: '⌛', key: m.key } });
+        if (!url || !url.includes('tiktok')) {
+            return m.reply('🎵 Envía un link válido de TikTok')
+        }
+
+        const user = m.sender
+
+        if (queue.has(user)) {
+            return m.reply('⏳ Ya estás descargando otro video...')
+        }
+
+        queue.set(user, true)
 
         try {
-            const { data: res } = await axios.get(`https://${config.kzmUrl}/api/download/tiktok?url=${link}&apiKey=${config.apiKzm}`);
 
-            if (!res.status || !res.data) {
-                await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
-                return m.reply('Video no encontrado.');
+            await conn.sendMessage(m.chat, {
+                react: { text: '🔥', key: m.key }
+            })
+
+            // 🧠 CACHE
+            if (cache.has(url)) {
+                const c = cache.get(url)
+
+                await conn.sendMessage(m.chat, {
+                    video: { url: c.video },
+                    caption: `🔥 ${c.title}\n✨ CACHE`
+                }, { quoted: m })
+
+                if (c.audio) {
+                    await conn.sendMessage(m.chat, {
+                        audio: { url: c.audio },
+                        mimetype: 'audio/mp4'
+                    }, { quoted: m })
+                }
+
+                return
             }
 
-            const { title, author, media } = res.data;
-            let txt = `*${config.visuals.emoji3} TikTok*\n\n📝 ${title}\n👤 ${author.nickname}\n📦 ${media.size}`;
+            let video = null
+            let audio = null
+            let title = 'TikTok'
 
-            await conn.sendMessage(m.chat, { video: { url: media.no_watermark }, caption: txt }, { quoted: m });
-            await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+            // =========================
+            // 🥇 1. TIKWM (BASE REAL)
+            // =========================
+            const tikwm = await tryCatch(async () => {
+                const res = await axios.get(
+                    `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`
+                )
+                return res?.data?.data
+            })
+
+            if (tikwm) {
+                video = pickNoWatermark(tikwm) // 🔥 SOLO SIN MARCA
+                audio = tikwm?.music
+                title = tikwm?.title || title
+            }
+
+            // =========================
+            // 🥈 2. FALLBACK CUALQUIERA
+            // =========================
+            if (!video) {
+                video = pickAny(tikwm)
+            }
+
+            // =========================
+            // ❌ FALLA TOTAL
+            // =========================
+            if (!video) {
+                return m.reply('❌ No se pudo obtener video sin marca')
+            }
+
+            // 💾 CACHE
+            cache.set(url, { video, audio, title })
+
+            // 🎥 VIDEO
+            await conn.sendMessage(m.chat, {
+                video: { url: video },
+                caption:
+`> 🔥 *MODO DIOS ACTIVADO*
+
+🎵 ${title}
+> ✨ Sin marca (si disponible)`
+            }, { quoted: m })
+
+            await sleep(1200)
+
+            // 🎧 AUDIO
+            if (audio) {
+                await conn.sendMessage(m.chat, {
+                    audio: { url: audio },
+                    mimetype: 'audio/mp4'
+                }, { quoted: m })
+            }
+
+            await conn.sendMessage(m.chat, {
+                react: { text: '⚡', key: m.key }
+            })
+
         } catch (e) {
-            await conn.sendMessage(m.chat, { react: { text: '✖️', key: m.key } });
-            m.reply(`*${config.visuals.emoji2}* Error: ${e.response?.data?.error || e.message}`);
+
+            console.log(e)
+
+            await conn.sendMessage(m.chat, {
+                react: { text: '❌', key: m.key }
+            })
+
+            m.reply(`❌ Error Modo Dios:\n${e.message}`)
+
+        } finally {
+            queue.delete(user)
         }
     }
-};
+}
 
-export default tiktokDownload;
+export default tiktokdl;

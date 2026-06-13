@@ -8,16 +8,18 @@ const pinterestSearch = {
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
+
         const query = text || args.join(' ')
 
         if (!query) {
             return m.reply(
                 `*${config.visuals.emoji2}* Ingresa un texto para buscar.\n\n` +
-                `Ejemplo: ${usedPrefix + commandName} Yotsuba Nakano`
+                `Ejemplo:\n${usedPrefix + commandName} Twice`
             )
         }
 
         try {
+
             await conn.sendMessage(m.chat, {
                 react: {
                     text: '🔍',
@@ -26,10 +28,11 @@ const pinterestSearch = {
             })
 
             const { data } = await axios.get(
-                `https://${config.kzmUrl}/api/search/pinterest?query=${encodeURIComponent(query)}&apiKey=${config.apiKzm}`
+                `https://api.delirius.store/search/pinterest?text=${encodeURIComponent(query)}`
             )
 
-            if (!data?.status || !data?.data?.length) {
+            if (!data?.status || !data?.results?.length) {
+
                 await conn.sendMessage(m.chat, {
                     react: {
                         text: '❌',
@@ -37,34 +40,24 @@ const pinterestSearch = {
                     }
                 })
 
-                return m.reply('No se encontraron resultados.')
+                return m.reply('❌ No se encontraron resultados.')
             }
 
-            const cards = data.data.slice(0, 7).map((item, index) => ({
-                image: {
-                    url: item.image_url
-                },
+            const cards = data.results
+                .slice(0, 8)
+                .map((img, index) => ({
+                    image: {
+                        url: img
+                    },
 
-                title: `📌 Resultado ${index + 1}`,
+                    title: `📌 Pinterest ${index + 1}`,
 
-                body:
-                    `🔎 Búsqueda: ${query}\n` +
-                    `🖼️ Pinterest Image`,
+                    body:
+                        `🔎 Búsqueda: ${query}\n` +
+                        `🖼️ Resultado ${index + 1} de Pinterest`,
 
-                footer: 'SaitamaBot-Sckt-MD'
-            }))
-
-            await conn.sendMessage(
-                m.chat,
-                {
-                    text: `📌 Resultados para: ${query}`,
-                    footer: 'Pinterest Search',
-                    cards
-                },
-                {
-                    quoted: m
-                }
-            )
+                    footer: 'SaitamaBot-Sckt-MD'
+                }))
 
             await conn.sendMessage(m.chat, {
                 react: {
@@ -73,8 +66,25 @@ const pinterestSearch = {
                 }
             })
 
+            await conn.sendMessage(
+                m.chat,
+                {
+                    text:
+                        `📌 *Pinterest Search*\n\n` +
+                        `🔎 Consulta: ${query}\n` +
+                        `🖼️ Resultados encontrados: ${data.results.length}`,
+
+                    footer: 'Pinterest Search',
+                    cards
+                },
+                {
+                    quoted: m
+                }
+            )
+
         } catch (e) {
-            console.log(e)
+
+            console.error(e)
 
             await conn.sendMessage(m.chat, {
                 react: {
@@ -83,7 +93,9 @@ const pinterestSearch = {
                 }
             })
 
-            m.reply('Error al procesar la búsqueda.')
+            m.reply(
+                `❌ Error: ${e.response?.data?.message || e.message}`
+            )
         }
     }
 }

@@ -1,5 +1,5 @@
-import { config } from '../config.js';
-import axios from 'axios';
+import axios from 'axios'
+import { config } from '../config.js'
 
 const instagramDownload = {
     name: 'instagram',
@@ -9,36 +9,75 @@ const instagramDownload = {
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        const urlMatch = text?.match(/https?:\/\/[^\s]+/gi);
-        const link = urlMatch ? urlMatch[0] : null;
 
-        if (!link) return m.reply(`*${config.visuals.emoji2}* Por favor, proporciona un enlace para procesar la descarga.`);
+        const urlMatch = text?.match(/https?:\/\/[^\s]+/gi)
+        const link = urlMatch ? urlMatch[0] : null
+
+        if (!link) {
+            return m.reply(
+                `*${config.visuals.emoji2}* Ingresa un enlace de Instagram.`
+            )
+        }
 
         if (!link.includes('instagram.com')) {
-            return m.reply(`*${config.visuals.emoji2}* El enlace proporcionado no pertenece a Instagram. Por favor, verifica la URL.`);
+            return m.reply(
+                `*${config.visuals.emoji2}* El enlace no es de Instagram.`
+            )
         }
 
-        await conn.sendMessage(m.chat, { react: { text: '⌛', key: m.key } });
+        await conn.sendMessage(m.chat, {
+            react: { text: '⌛', key: m.key }
+        })
 
         try {
-            const { data: res } = await axios.get(`https://${config.kzmUrl}/api/download/instagram?url=${link}&apiKey=${config.apiKzm}`);
 
-            if (!res.status || !res.data || res.data.length === 0) {
-                await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
-                return m.reply('No se pudo encontrar contenido en este enlace.');
+            // 🔥 NUEVA API DELIRIUS V2
+            const { data: res } = await axios.get(
+                `https://api.delirius.store/download/instagramv2?url=${encodeURIComponent(link)}`
+            )
+
+            if (!res?.status || !res?.data?.download?.length) {
+                await conn.sendMessage(m.chat, {
+                    react: { text: '❌', key: m.key }
+                })
+                return m.reply('No se pudo obtener contenido.')
             }
 
-            const mediaUrl = res.data[0].url;
-            const caption = `*${config.visuals.emoji3} Instagram Downloader*`;
+            const mediaList = res.data.download
 
-            await conn.sendMessage(m.chat, { video: { url: mediaUrl }, caption: caption }, { quoted: m });
-            await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+            // 🎯 enviar todos los medios
+            for (let item of mediaList) {
+
+                if (item.type === 'image') {
+                    await conn.sendMessage(m.chat, {
+                        image: { url: item.url },
+                        caption: `*${config.visuals.emoji3} Instagram Downloader*`
+                    }, { quoted: m })
+                }
+
+                if (item.type === 'video') {
+                    await conn.sendMessage(m.chat, {
+                        video: { url: item.url },
+                        caption: `*${config.visuals.emoji3} Instagram Downloader*`
+                    }, { quoted: m })
+                }
+            }
+
+            await conn.sendMessage(m.chat, {
+                react: { text: '✅', key: m.key }
+            })
 
         } catch (e) {
-            await conn.sendMessage(m.chat, { react: { text: '✖️', key: m.key } });
-            m.reply(`*${config.visuals.emoji2}* Error: ${e.response?.data?.error || e.message}`);
+
+            await conn.sendMessage(m.chat, {
+                react: { text: '✖️', key: m.key }
+            })
+
+            m.reply(
+                `*${config.visuals.emoji2}* Error: ${e.response?.data?.message || e.message}`
+            )
         }
     }
-};
+}
 
 export default instagramDownload;

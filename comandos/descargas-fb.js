@@ -1,5 +1,5 @@
-import { config } from '../config.js';
-import axios from 'axios';
+import axios from 'axios'
+import { config } from '../config.js'
 
 const fbDownload = {
     name: 'facebook',
@@ -9,37 +9,75 @@ const fbDownload = {
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
-        const urlMatch = text?.match(/https?:\/\/[^\s]+/gi);
-        const link = urlMatch ? urlMatch[0] : null;
 
-        if (!link) return m.reply(`*${config.visuals.emoji2}* Por favor, ingresa el enlace del video de Facebook que deseas descargar.`);
+        const urlMatch = text?.match(/https?:\/\/[^\s]+/gi)
+        const link = urlMatch ? urlMatch[0] : null
+
+        if (!link) {
+            return m.reply(
+                `*${config.visuals.emoji2}* Ingresa un enlace de Facebook válido.`
+            )
+        }
 
         if (!link.includes('facebook.com') && !link.includes('fb.watch')) {
-            return m.reply(`*${config.visuals.emoji2}* El enlace no parece ser de Facebook. Asegúrate de copiar la URL correctamente.`);
+            return m.reply(
+                `*${config.visuals.emoji2}* El enlace no es de Facebook.`
+            )
         }
 
-        await conn.sendMessage(m.chat, { react: { text: '⌛', key: m.key } });
+        await conn.sendMessage(m.chat, {
+            react: { text: '⌛', key: m.key }
+        })
 
         try {
-            const { data: res } = await axios.get(`https://${config.kzmUrl}/api/download/facebook?url=${link}&apiKey=${config.apiKzm}`);
 
-            if (!res.status || !res.download) {
-                await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
-                return m.reply('No se pudo obtener el video. Verifica que el enlace sea público.');
+            // 🔥 NUEVA API DELIRIUS
+            const { data: res } = await axios.get(
+                `https://api.delirius.store/download/facebook?url=${encodeURIComponent(link)}`
+            )
+
+            if (!res?.status || !res?.list?.length) {
+                await conn.sendMessage(m.chat, {
+                    react: { text: '❌', key: m.key }
+                })
+                return m.reply('No se pudo obtener el video.')
             }
 
-            const videoUrl = res.download;
-            const title = res.metadata?.title || 'Video de Facebook';
-            const caption = `*${config.visuals.emoji3} Facebook Downloader*\n\n📝 ${title}`;
+            // 🎯 elegir mejor calidad
+            const best = res.list.find(v => v.quality?.includes('720')) || res.list[0]
+            const videoUrl = best?.url
 
-            await conn.sendMessage(m.chat, { video: { url: videoUrl }, caption: caption }, { quoted: m });
-            await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+            if (!videoUrl) {
+                return m.reply('No hay enlace de descarga disponible.')
+            }
+
+            const caption =
+`*${config.visuals.emoji3} Facebook Downloader*
+
+📌 Calidad: ${best?.quality || 'Desconocida'}`
+
+            // 🎥 enviar video
+            await conn.sendMessage(
+                m.chat,
+                { video: { url: videoUrl }, caption },
+                { quoted: m }
+            )
+
+            await conn.sendMessage(m.chat, {
+                react: { text: '✅', key: m.key }
+            })
 
         } catch (e) {
-            await conn.sendMessage(m.chat, { react: { text: '✖️', key: m.key } });
-            m.reply(`*${config.visuals.emoji2}* Error: ${e.response?.data?.error || e.message}`);
+
+            await conn.sendMessage(m.chat, {
+                react: { text: '✖️', key: m.key }
+            })
+
+            m.reply(
+                `*${config.visuals.emoji2}* Error: ${e.response?.data?.message || e.message}`
+            )
         }
     }
-};
+}
 
 export default fbDownload;
