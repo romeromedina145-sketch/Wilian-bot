@@ -2,10 +2,10 @@ import { config } from '../config.js';
 import axios from 'axios';
 
 const aiKazuma = {
-    name: 'kazuma',
+    name: 'Saitama',
     alias: ['ai', 'ia', 'gemini'],
     category: 'ia',
-    desc: 'Habla con la IA de Kazuma.',
+    desc: 'Habla con la IA de Saitama.',
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
@@ -14,7 +14,7 @@ const aiKazuma = {
         await conn.sendMessage(m.chat, { react: { text: '🧠', key: m.key } });
         const { key } = await m.reply('*⌛* Procesando respuesta, espera un momento...');
 
-        const prompt = `Actúa como Kazuma, el asistente inteligente de este bot creado por Félix Ofc. Tu personalidad es alegre, servicial y muy entusiasta. Debes ser amigable con ${m.pushName} y demostrar mucha energía en cada respuesta. IMPORTANTE: No utilices emojis en tus respuestas bajo ninguna circunstancia. Para resaltar texto en negrita utiliza únicamente UN solo asterisco, por ejemplo: *así*. No utilices doble asterisco bajo ninguna circunstancia. Responde de forma creativa a lo siguiente: `;
+        const prompt = `Actúa como Saitama, el asistente inteligente de este bot creado por SAI. Tu personalidad es alegre, servicial y muy entusiasta. Debes ser amigable con ${m.pushName} y demostrar mucha energía en cada respuesta. IMPORTANTE: No utilices emojis en tus respuestas bajo ninguna circunstancia. Para resaltar texto en negrita utiliza únicamente UN solo asterisco, por ejemplo: *así*. No utilices doble asterisco bajo ninguna circunstancia. Responde de forma creativa a lo siguiente: `;
 
         try {
             const { data: res } = await axios.get(`https://${config.kzmUrl}/api/ai/gemini?text=${encodeURIComponent(prompt + text)}&cookie=cokie&apiKey=${config.apiKzm}`);
