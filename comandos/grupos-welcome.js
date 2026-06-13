@@ -21,7 +21,7 @@ export default function welcomeHandler(conn) {
             try {
                 pp = await conn.profilePictureUrl(jid, 'image');
             } catch {
-                pp = 'https://upload.yotsuba.giize.com/u/VPpgV7Bn.jpeg';
+                pp = 'https://files.catbox.moe/j2q1zj.png';
             }
 
             if (action === 'add') {
