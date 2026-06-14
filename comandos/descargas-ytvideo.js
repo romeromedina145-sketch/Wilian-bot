@@ -73,7 +73,7 @@ const youtubeVideo = {
                     totalMinutes = parts[0]
                 }
 
-                if (totalMinutes >= 45) {
+                if (totalMinutes >= 180) {
                     await conn.sendMessage(m.chat, {
                         react: {
                             text: '⚠️',
@@ -82,7 +82,7 @@ const youtubeVideo = {
                     })
 
                     return m.reply(
-                        `*${config.visuals.emoji2}* El video es demasiado largo. El límite permitido es de 45 minutos.`
+                        `*${config.visuals.emoji2}* El video es demasiado largo. El límite permitido es de 180 minutos.`
                     )
                 }
 
