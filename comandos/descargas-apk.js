@@ -40,6 +40,8 @@ if (
 
             const json = res?.data
 
+            console.log(JSON.stringify(json, null, 2))
+
             if (!json) {
                 return m.reply('❌ La API no respondió correctamente.')
             }
