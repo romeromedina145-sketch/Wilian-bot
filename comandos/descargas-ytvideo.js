@@ -119,39 +119,70 @@ _Enviando video, espera un momento..._`
             }
 
             const { data: videoRes } = await axios.get(
-                `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=360p`
-            )
+    `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=2160p`
+)
 
-            if (!videoRes?.status || !videoRes?.data) {
-                await conn.sendMessage(m.chat, {
-                    react: {
-                        text: '❌',
-                        key: m.key
-                    }
-                })
+if (!videoRes?.status || !videoRes?.data) {
+    return m.reply('Error al obtener el video del servidor.')
+}
 
-                return m.reply('Error al obtener el video del servidor.')
-            }
+const videoData = videoRes.data
 
-            const videoData = videoRes.data
+const head = await axios.head(videoData.download)
 
-            await conn.sendMessage(
-                m.chat,
-                {
-                    video: {
-                        url: videoData.download
-                    },
-                    mimetype: 'video/mp4',
-                    caption:
-                        `🎬 *${videoData.title || 'Video'}*\n` +
-                        `📺 Autor: ${videoData.author || 'Desconocido'}\n` +
-                        `👁️ Vistas: ${videoData.views || '0'}\n` +
-                        `🎞️ Calidad: ${videoData.format || '360p'}`
-                },
-                {
-                    quoted: m
-                }
-            )
+const fileSize = Number(head.headers['content-length'] || 0)
+
+const sizeMB = fileSize / 1024 / 1024
+
+console.log('VIDEO:', videoData.title)
+console.log('TAMAÑO:', sizeMB.toFixed(2), 'MB')
+
+if (sizeMB > 800) {
+    return m.reply(
+        `❌ El video pesa ${sizeMB.toFixed(2)} MB\nMáximo permitido: 800 MB`
+    )
+}
+
+if (sizeMB <= 100) {
+
+    await conn.sendMessage(
+        m.chat,
+        {
+            video: {
+                url: videoData.download
+            },
+            mimetype: 'video/mp4',
+            caption:
+                `🎬 ${videoData.title}\n` +
+                `🎞️ Calidad: ${videoData.format}\n` +
+                `📦 Peso: ${sizeMB.toFixed(2)} MB`
+        },
+        {
+            quoted: m
+        }
+    )
+
+} else {
+
+    await conn.sendMessage(
+        m.chat,
+        {
+            document: {
+                url: videoData.download
+            },
+            mimetype: 'video/mp4',
+            fileName: `${videoData.title}.mp4`,
+            caption:
+                `📄 Video enviado como documento\n\n` +
+                `🎬 ${videoData.title}\n` +
+                `📦 Peso: ${sizeMB.toFixed(2)} MB`
+        },
+        {
+            quoted: m
+        }
+    )
+
+}
 
             await conn.sendMessage(m.chat, {
                 react: {
