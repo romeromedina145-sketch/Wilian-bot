@@ -1,98 +1,105 @@
+ import axios from 'axios'
 import { config } from '../config.js'
-import axios from 'axios'
 
 const spotifyDownload = {
     name: 'spotify',
-    alias: ['sp', 'spotifydl', 'spdls'],
+    alias: ['spotifydownload', 'spdl'],
     category: 'descargas',
-    desc: 'Descarga música de Spotify.',
+    desc: 'Descarga música de Spotify',
     noPrefix: true,
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
+        const match = text?.match(
+            /https?:\/\/(?:open\.)?spotify\.com\/(?:intl-[a-z]{2}\/)?track\/[A-Za-z0-9]+/i
+        )
 
-        const urlMatch = text?.match(/https?:\/\/[^\s]+/gi)
-        const link = urlMatch ? urlMatch[0] : null
-
-        if (!link) {
+        if (!match) {
             return m.reply(
-                `*${config.visuals.emoji2}* Proporciona un enlace de Spotify.`
+                `*${config.visuals.emoji2}* Ingresa un enlace válido de Spotify.`
             )
         }
 
-        const spotifyRegex =
-            /^https?:\/\/(open\.)?spotify\.com\/(track|album|playlist)\//i
-
-        if (!spotifyRegex.test(link)) {
-            return m.reply(
-                `*${config.visuals.emoji2}* El enlace no parece ser de Spotify.`
-            )
-        }
-
-        await conn.sendMessage(m.chat, {
-            react: {
-                text: '⌛',
-                key: m.key
-            }
-        })
+        const spotifyUrl = match[0]
 
         try {
+            await conn.sendMessage(m.chat, {
+                react: {
+                    text: '⏳',
+                    key: m.key
+                }
+            })
 
-            const { data: res } = await axios.get(
-                `https://${config.kzmUrl}/api/download/spotify?url=${encodeURIComponent(link)}&apiKey=${config.apiKzm}`
-            )
+            console.log('[SPOTIFY] URL:', spotifyUrl)
 
-            if (!res?.status || !res?.result) {
+            const apiUrl =
+                `https://api.delirius.store/download/spotifydl?url=${encodeURIComponent(spotifyUrl)}`
 
-                await conn.sendMessage(m.chat, {
-                    react: {
-                        text: '❌',
-                        key: m.key
-                    }
-                })
+            const { data } = await axios.get(apiUrl, {
+                timeout: 180000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            })
 
-                return m.reply(
-                    'No se pudo obtener información de Spotify.'
+            console.log('[SPOTIFY] Respuesta API:')
+            console.log(JSON.stringify(data, null, 2))
+
+            if (!data?.status) {
+                throw new Error(
+                    data?.message ||
+                    'La API devolvió estado falso.'
                 )
             }
 
-            const data = res.result
+            const song = data.data
+
+            if (!song?.download) {
+                throw new Error(
+                    'No se encontró enlace de descarga.'
+                )
+            }
+
+            const formatDuration = (ms) => {
+                const total = Math.floor(ms / 1000)
+                const minutes = Math.floor(total / 60)
+                const seconds = total % 60
+
+                return `${minutes}:${seconds
+                    .toString()
+                    .padStart(2, '0')}`
+            }
 
             const caption =
-`🎵 *SPOTIFY DOWNLOADER*
+`🎵 *Título:* ${song.title || 'Desconocido'}
+👤 *Autor:* ${song.author || 'Desconocido'}
+⏱️ *Duración:* ${formatDuration(song.duration || 0)}
 
-📀 Título:
-${data.title || 'Desconocido'}
+_Enviando audio..._`
 
-🎤 Artista:
-${data.artist || 'Desconocido'}
-
-🔗 Enlace:
-${link}
-
-⏳ Enviando audio...`
-
-            await conn.sendMessage(
-                m.chat,
-                {
-                    image: {
-                        url: data.thumbnail
+            if (song.image) {
+                await conn.sendMessage(
+                    m.chat,
+                    {
+                        image: {
+                            url: song.image
+                        },
+                        caption
                     },
-                    caption
-                },
-                {
-                    quoted: m
-                }
-            )
+                    {
+                        quoted: m
+                    }
+                )
+            }
 
             await conn.sendMessage(
                 m.chat,
                 {
                     audio: {
-                        url: data.download_url
+                        url: song.download
                     },
                     mimetype: 'audio/mpeg',
-                    ptt: false,
-                    fileName: `${data.title || 'spotify'}.mp3`
+                    fileName: `${song.title || 'spotify'}.mp3`,
+                    ptt: false
                 },
                 {
                     quoted: m
@@ -106,26 +113,22 @@ ${link}
                 }
             })
 
-        } catch (e) {
-
-            console.error('SPOTIFY ERROR:', e)
+        } catch (err) {
+            console.error('[SPOTIFY ERROR]')
+            console.error(err)
 
             await conn.sendMessage(m.chat, {
                 react: {
-                    text: '✖️',
+                    text: '❌',
                     key: m.key
                 }
             })
 
             m.reply(
-                `❌ Error: ${
-                    e?.response?.data?.error ||
-                    e?.response?.data?.message ||
-                    e.message
-                }`
+                `*${config.visuals.emoji2}* Error al descargar la canción.\n\n${err.message}`
             )
         }
     }
 }
 
-export default spotifyDownload;
+export default spotifyDownload;        
