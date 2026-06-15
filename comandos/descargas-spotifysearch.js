@@ -58,7 +58,7 @@ const spotifySearch = {
                         name: 'quick_reply',
                         buttonParamsJson: JSON.stringify({
                             display_text: '🎵 Descargar',
-                            id: `.spotify ${track.url}`
+                            id: `.spotify ${res.url}`
                         })
                     },
                     {
