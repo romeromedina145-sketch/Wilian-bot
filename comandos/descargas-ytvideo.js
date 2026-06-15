@@ -73,7 +73,7 @@ const youtubeVideo = {
                     totalMinutes = parts[0]
                 }
 
-                if (totalMinutes >= 180) {
+                if (totalMinutes >= 45) {
                     await conn.sendMessage(m.chat, {
                         react: {
                             text: '⚠️',
@@ -82,7 +82,7 @@ const youtubeVideo = {
                     })
 
                     return m.reply(
-                        `*${config.visuals.emoji2}* El video es demasiado largo. El límite permitido es de 180 minutos.`
+                        `*${config.visuals.emoji2}* El video es demasiado largo. El límite permitido es de 45 minutos.`
                     )
                 }
 
@@ -118,84 +118,89 @@ _Enviando video, espera un momento..._`
                 )
             }
 
-            const qualities = [
-    '2160p',
-    '1440p',
-    '1080p',
-    '720p',
-    '480p',
-    '360p'
-]
+            const qualities = ['1080p', '720p', '360p']
 
 let videoData = null
+let selectedQuality = null
 
 for (const quality of qualities) {
-    try {
 
-        const { data } = await axios.get(
-            `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=${quality}`
-        )
+try {
 
-        if (data?.status && data?.data?.download) {
+    const { data } = await axios.get(
+        `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=${quality}`
+    )
 
-            console.log(`✅ CALIDAD ENCONTRADA: ${quality}`)
-
-            videoData = data.data
-            break
-        }
-
-    } catch (e) {
-        console.log(`❌ FALLÓ ${quality}`)
+    if (data?.status && data?.data?.download) {
+        videoData = data.data
+        selectedQuality = quality
+        break
     }
+
+} catch {}
+
 }
 
 if (!videoData) {
-    return m.reply('❌ No se pudo obtener el video.')
+return m.reply('❌ No se pudo obtener el video.')
 }
 
-const videoData = videoRes.data
+let fileSize = 0
 
-if (sizeMB > 800) {
-    return m.reply(
-        `❌ El video pesa ${sizeMB.toFixed(2)} MB\nMáximo permitido: 800 MB`
-    )
+try {
+
+const head = await axios.head(videoData.download)
+
+fileSize = parseInt(
+    head.headers['content-length'] ||
+    head.headers['Content-Length'] ||
+    0
+)
+
+} catch {}
+
+const sizeMB = fileSize / (1024 * 1024)
+const sizeGB = sizeMB / 1024
+
+if (sizeGB >= 3) {
+return m.reply('❌ El video supera los 3 GB permitidos.')
 }
 
-    await conn.sendMessage(
-        m.chat,
-        {
-            video: {
-                url: videoData.download
-            },
-            mimetype: 'video/mp4',
-            caption:
-                `🎬 ${videoData.title}\n` +
-                `🎞️ Calidad: ${videoData.format}\n` +
+const caption =
+"🎬 *${videoData.title || 'Video'}* 📺 Autor: ${videoData.author || 'Desconocido'} 👁️ Vistas: ${videoData.views || '0'} 🎞️ Calidad: ${selectedQuality} 📦 Tamaño: ${sizeMB.toFixed(2)} MB"
+
+if (sizeMB >= 200) {
+
+await conn.sendMessage(
+    m.chat,
+    {
+        document: {
+            url: videoData.download
         },
-        {
-            quoted: m
-        }
-    )
+        mimetype: 'video/mp4',
+        fileName: `${videoData.title || 'video'}.mp4`,
+        caption
+    },
+    {
+        quoted: m
+    }
+)
 
 } else {
 
-    await conn.sendMessage(
-        m.chat,
-        {
-            document: {
-                url: videoData.download
-            },
-            mimetype: 'video/mp4',
-            fileName: `${videoData.title}.mp4`,
-            caption:
-                `📄 Video enviado como documento\n\n` +
-                `🎬 ${videoData.title}\n` +
-                `📦 Peso: ${sizeMB.toFixed(2)} MB`
+await conn.sendMessage(
+    m.chat,
+    {
+        video: {
+            url: videoData.download
         },
-        {
-            quoted: m
-        }
-    )
+        mimetype: 'video/mp4',
+        caption
+    },
+    {
+        quoted: m
+    }
+)
 
 }
 
