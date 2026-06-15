@@ -53,6 +53,10 @@ if (
                 return m.reply('❌ No se encontró ninguna aplicación.')
             }
 
+            console.log('BUSCADO:', query)
+console.log('APK:', apk.name)
+console.log('PACKAGE:', apk.id)
+
             // 📦 normalización de datos
             const name = apk.name || 'APK desconocida'
             const id = apk.id || 'N/A'
