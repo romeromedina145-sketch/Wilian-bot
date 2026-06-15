@@ -119,7 +119,7 @@ _Enviando video, espera un momento..._`
             }
 
             const { data: videoRes } = await axios.get(
-    `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=2160p`
+    `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=360p`
 )
 
 if (!videoRes?.status || !videoRes?.data) {
