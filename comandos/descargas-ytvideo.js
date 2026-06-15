@@ -155,22 +155,11 @@ if (!videoData) {
 
 const videoData = videoRes.data
 
-const head = await axios.head(videoData.download)
-
-const fileSize = Number(head.headers['content-length'] || 0)
-
-const sizeMB = fileSize / 1024 / 1024
-
-console.log('VIDEO:', videoData.title)
-console.log('TAMAÑO:', sizeMB.toFixed(2), 'MB')
-
 if (sizeMB > 800) {
     return m.reply(
         `❌ El video pesa ${sizeMB.toFixed(2)} MB\nMáximo permitido: 800 MB`
     )
 }
-
-if (sizeMB <= 100) {
 
     await conn.sendMessage(
         m.chat,
@@ -182,7 +171,6 @@ if (sizeMB <= 100) {
             caption:
                 `🎬 ${videoData.title}\n` +
                 `🎞️ Calidad: ${videoData.format}\n` +
-                `📦 Peso: ${sizeMB.toFixed(2)} MB`
         },
         {
             quoted: m
