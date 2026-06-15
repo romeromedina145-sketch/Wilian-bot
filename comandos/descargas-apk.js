@@ -8,8 +8,17 @@ const apkDownload = {
 
     run: async (conn, m, args, usedPrefix, commandName, text) => {
 
-        const query = text || args.join(' ')
+        let query = text || args.join(' ')
 
+const cache = global.apkSearch?.[m.sender]
+
+if (
+    cache &&
+    !isNaN(query) &&
+    cache[Number(query)]
+) {
+    query = cache[Number(query)].title
+}
         if (!query) {
             return m.reply(
                 `📦 Ingresa el nombre de una aplicación.\n\n` +
