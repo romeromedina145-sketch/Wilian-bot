@@ -118,12 +118,39 @@ _Enviando video, espera un momento..._`
                 )
             }
 
-            const { data: videoRes } = await axios.get(
-    `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=360p`
-)
+            const qualities = [
+    '2160p',
+    '1440p',
+    '1080p',
+    '720p',
+    '480p',
+    '360p'
+]
 
-if (!videoRes?.status || !videoRes?.data) {
-    return m.reply('Error al obtener el video del servidor.')
+let videoData = null
+
+for (const quality of qualities) {
+    try {
+
+        const { data } = await axios.get(
+            `https://api.delirius.store/download/ytmp4?url=${encodeURIComponent(videoUrl)}&format=${quality}`
+        )
+
+        if (data?.status && data?.data?.download) {
+
+            console.log(`✅ CALIDAD ENCONTRADA: ${quality}`)
+
+            videoData = data.data
+            break
+        }
+
+    } catch (e) {
+        console.log(`❌ FALLÓ ${quality}`)
+    }
+}
+
+if (!videoData) {
+    return m.reply('❌ No se pudo obtener el video.')
 }
 
 const videoData = videoRes.data
