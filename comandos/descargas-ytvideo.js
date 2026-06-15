@@ -167,8 +167,7 @@ return m.reply('❌ El video supera los 3 GB permitidos.')
 }
 
 const caption =
-"🎬 *${videoData.title || 'Video'}* 📺 Autor: ${videoData.author || 'Desconocido'} 👁️ Vistas: ${videoData.views || '0'} 🎞️ Calidad: ${selectedQuality} 📦 Tamaño: ${sizeMB.toFixed(2)} MB"
-
+`🎬 *${videoData.title || 'Video'}* 📺 Autor: ${videoData.author || 'Desconocido'} 👁️ Vistas: ${videoData.views || '0'} 🎞️ Calidad: ${selectedQuality} 📦 Tamaño: ${sizeMB.toFixed(2)} MB`
 if (sizeMB >= 200) {
 
 await conn.sendMessage(
