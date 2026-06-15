@@ -41,37 +41,42 @@ const rwCommand = {
                 return m.reply(`*${config.visuals.emoji2}* ¡Espera! Faltan ${minutos} min y ${segundos} seg.`);
             }
 
-            if (!fs.existsSync(gachaPath)) return m.reply('Error: Base de datos gacha no encontrada.');
-            const rawData = JSON.parse(fs.readFileSync(gachaPath, 'utf-8'));
-            const plantillaPersonajes = rawData[baseGroup];
-            const allIds = Object.keys(plantillaPersonajes);
+            const { data: gachaRes } = await axios.get(
+    'https://api.delirius.store/anime/gacha'
+);
 
-            const randomId = allIds[Math.floor(Math.random() * allIds.length)];
-            const infoFija = plantillaPersonajes[randomId];
+if (!gachaRes?.status || !gachaRes?.data) {
+    return m.reply('Error al obtener personaje del gacha.');
+}
 
-            const infoGrupo = await database.getCharacterOwner(group, randomId);
-            const status = infoGrupo ? infoGrupo.status : 'libre';
-            const owner = infoGrupo ? infoGrupo.user_jid : null;
+const personaje = gachaRes.data;
 
-            let imageUrl = infoFija.url;
-            if (!imageUrl) {
-                const queryStr = `${infoFija.name} ${infoFija.source}`;
-                const apiUrl = `https://${config.kzmUrl}/api/search/pinterest?query=${encodeURIComponent(queryStr)}&apiKey=kzm-OifUrFOl-oSSLeonc`;
-                try {
-                    const response = await axios.get(apiUrl);
-                    if (response.data.status && response.data.data.length > 0) {
-                        imageUrl = response.data.data[0].image_url;
-                    }
-                } catch (e) {}
-            }
-            if (!imageUrl) imageUrl = 'https://telegra.ph/file/0cf76964ff002f232491a.jpg';
+const randomId = `DLR-${Date.now()}`;
 
-            let caption = `*» (❍ᴥ❍ʋ) \`GACHA ROLL\` «*\n\n`;
-            caption += `*Nombre:* ${infoFija.name}\n`;
-            caption += `*ID »* ${randomId}\n`;
-            caption += `*Fuente:* ${infoFija.source}\n`;
-            caption += `*Valor:* ¥${infoFija.value.toLocaleString()}\n`;
-            caption += `*Estado:* ${status === 'libre' ? 'Libre' : 'Domado'}\n`;
+const infoFija = {
+    name: personaje.name,
+    source: personaje.anime,
+    value: Math.floor(Math.random() * 50000) + 1000,
+    url: personaje.image
+};
+
+const infoGrupo = await database.getCharacterOwner(group, randomId);
+const status = infoGrupo ? infoGrupo.status : 'libre';
+const owner = infoGrupo ? infoGrupo.user_jid : null;
+
+let imageUrl = personaje.image;
+
+let caption = `*» (❍ᴥ❍ʋ) GACHA ROLL «*\n\n`;
+caption += `*Nombre:* ${personaje.name}\n`;
+caption += `*Anime:* ${personaje.anime}\n`;
+caption += `*Género:* ${personaje.gender}\n`;
+caption += `*ID:* ${randomId}\n`;
+caption += `*Valor:* ¥${infoFija.value.toLocaleString()}\n`;
+caption += `*Estado:* ${status === 'libre' ? 'Libre' : 'Domado'}\n`;
+
+if (owner) {
+    caption += `*Dueño:* @${owner.split('@')[0]}\n`;
+}
 
             if (owner) {
                 caption += `*Dueño:* @${owner.split('@')[0]}\n`;
