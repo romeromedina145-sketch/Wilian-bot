@@ -42,7 +42,11 @@ const appStoreSearch = {
                 return m.reply('❌ No se encontraron aplicaciones.')
             }
 
-            const cards = data.slice(0, 8).map(app => ({
+            // Guardar resultados para apkdl
+            global.apkSearch = global.apkSearch || {}
+            global.apkSearch[m.sender] = data.slice(0, 8)
+
+            const cards = data.slice(0, 8).map((app, index) => ({
 
                 image: {
                     url: app.image
@@ -72,7 +76,7 @@ const appStoreSearch = {
                         name: 'quick_reply',
                         buttonParamsJson: JSON.stringify({
                             display_text: '📦 Descargar APK',
-                            id: `.apkdl ${app.title}`
+                            id: `.apkdl ${index}`
                         })
                     }
                 ]
