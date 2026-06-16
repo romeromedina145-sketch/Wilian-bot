@@ -47,9 +47,9 @@ const claimCommand = {
             let pjId = null;
 
             // 1. Intentar por argumento de texto directo (.c 14)
-            if (args && args[0] && !isNaN(args[0])) {
-                pjId = args[0];
-            } 
+            if (args && args[0]) {
+    pjId = args[0].trim();
+}
             // 2. Si cita un mensaje
             else if (m.quoted) {
                 // Comprobación A: Buscar en la memoria global
@@ -64,10 +64,10 @@ const claimCommand = {
                 const quotedText = m.quoted.text || m.quoted.caption || '';
                 if (!pjId && quotedText) {
                     // Esta expresión regular busca "ID", cualquier símbolo intermedio como » o : y luego captura los números sueltos
-                    const matchId = quotedText.match(/ID[\s\S]*?(\d+)/i);
-                    if (matchId) {
-                        pjId = matchId[1];
-                    }
+                    const matchId = quotedText.match(/ID:\s*([A-Z]+-\d+)/i);
+if (matchId) {
+    pjId = matchId[1];
+}
                 }
             }
 

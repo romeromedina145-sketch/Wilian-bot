@@ -17,7 +17,7 @@ const sCommand = {
             const mime = (q.msg || q).mimetype || '';
 
             if (!/image/.test(mime)) {
-                return m.reply(`*${config.visuals.emoji2}* Responde a una imagen con el comando *s*.`);
+                return m.reply(`*${config.visuals.emoji2}* Responde a una imagen con el comando *.s*`);
             }
 
             const stream = await downloadContentFromMessage(q.msg || q, 'image');
