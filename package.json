@@ -8,9 +8,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "todleys": "github:Dev-FelixOfc/TodLeys",
-    "@Dev-FelixOfc/databaselib": "github:Dev-FelixOfc/databaselib",
-    "wimages-lib": "github:Dev-FelixOfc/WimagesLib",
+"todleys": "git+https://github.com/Dev-FelixOfc/TodLeys.git",
+"@Dev-FelixOfc/databaselib": "git+https://github.com/Dev-FelixOfc/databaselib.git",
+"wimages-lib": "git+https://github.com/Dev-FelixOfc/WimagesLib.git",
     "better-sqlite3": "^11.0.0",
     "axios": "^1.6.7",
     "pino": "^9.6.0",
